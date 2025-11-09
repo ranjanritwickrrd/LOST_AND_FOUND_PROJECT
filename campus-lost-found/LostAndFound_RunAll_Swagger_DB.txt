@@ -1,0 +1,297 @@
+
+# ============================================================
+# 🧩 Campus Lost & Found — RUN BACKEND → SWAGGER → DB CHECK
+# ============================================================
+# This script is ordered exactly as requested:
+# 1) Run the backend (all APIs) 
+# 2) Run Swagger and test endpoints
+# 3) View database changes
+#
+# Copy blocks into your terminal section-by-section.
+# ============================================================
+
+
+# =========================
+# 1) RUN THE BACKEND (APIs)
+# =========================
+
+# Go to project root
+cd ~/Desktop/ASSL/college_connect/Campus-Connect/campus-lost-found
+
+# Kill any lingering Next.js / Node dev processes & free common ports
+pkill -f "next dev" 2>/dev/null || true
+pkill -f "node .*next" 2>/dev/null || true
+lsof -ti :3000 | xargs -r kill -9
+lsof -ti :3001 | xargs -r kill -9
+
+# Clear stale Next.js dev lock (avoids 'Unable to acquire lock')
+rm -f .next/dev/lock
+
+# Install deps (idempotent)
+npm install
+
+# Prisma client & DB schema sync (uses .env DATABASE_URL=...mysql...)
+npx prisma generate
+npx prisma db push
+
+# Start API on port 3000 (recommended)
+npx next dev -p 3000
+# (Run this in its own terminal tab and leave it running.)
+
+
+# ====================================
+# 2) RUN SWAGGER & TEST ALL ENDPOINTS
+# ====================================
+
+# -- In a NEW terminal --
+
+# Set the API base URL that Swagger/cURL will use
+BASE_URL=http://localhost:3000
+# If you intentionally run Next on 3001, set:
+# BASE_URL=http://localhost:3001
+
+# Ensure your OpenAPI spec exists at project root.
+# If you already created openapi.yaml earlier, skip the here-doc.
+cd ~/Desktop/ASSL/college_connect/Campus-Connect/campus-lost-found
+test -f openapi.yaml || cat > openapi.yaml <<'YAML'
+openapi: 3.0.3
+info:
+  title: Campus Lost & Found API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      responses: { '200': { description: OK } }
+  /api/auth/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password, name]
+              properties:
+                username: { type: string }
+                password: { type: string, format: password }
+                name: { type: string }
+                faculty: { type: string }
+                phone: { type: string }
+                role: { type: string, enum: [STUDENT, TEACHER, ADMIN] }
+      responses: { '201': { description: Created } }
+  /api/auth/login:
+    post:
+      summary: Login and receive JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string, format: password }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+  /api/me:
+    get:
+      summary: Get current user profile
+      security: [ { bearerAuth: [] } ]
+      responses: { '200': { description: OK } }
+  /api/items:
+    get:
+      summary: List items
+      responses: { '200': { description: OK } }
+    post:
+      summary: Create item
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, title]
+              properties:
+                type: { type: string, enum: [LOST, FOUND] }
+                title: { type: string }
+                description: { type: string }
+                category: { type: string }
+                locationFound: { type: string }
+                dateFound: { type: string, format: date-time }
+                imageUrl: { type: string }
+      responses: { '201': { description: Created } }
+  /api/items/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    get:
+      summary: Get item by id
+      responses:
+        '200': { description: OK }
+        '404': { description: Not Found }
+    put:
+      summary: Update item
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type: { type: string, enum: [LOST, FOUND] }
+                title: { type: string }
+                description: { type: string }
+                category: { type: string }
+                locationFound: { type: string }
+                dateFound: { type: string, format: date-time }
+                imageUrl: { type: string }
+      responses: { '200': { description: Updated } }
+    delete:
+      summary: Delete item
+      security: [ { bearerAuth: [] } ]
+      responses: { '200': { description: Deleted } }
+  /api/claims:
+    get:
+      summary: List claims (mine + on my items; admin sees all)
+      security: [ { bearerAuth: [] } ]
+      responses: { '200': { description: OK } }
+    post:
+      summary: Create claim
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId, message]
+              properties:
+                itemId: { type: string }
+                message: { type: string }
+                contact: { type: string }
+      responses: { '201': { description: Created } }
+  /api/claims/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    put:
+      summary: Update claim status
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [PENDING, APPROVED, REJECTED] }
+      responses: { '200': { description: Updated } }
+YAML
+
+# If you are running the API on port 3001, update the servers URL in openapi.yaml:
+# sed -i 's|http://localhost:3000|http://localhost:3001|g' openapi.yaml
+
+# Run Swagger UI on :8080 with your spec
+docker rm -f campus-lf-swagger 2>/dev/null || true
+docker run -d --name campus-lf-swagger -p 8080:8080 \
+  -e SWAGGER_JSON=/mnt/openapi.yaml \
+  -v "$(pwd)/openapi.yaml:/mnt/openapi.yaml:ro" \
+  swaggerapi/swagger-ui:latest
+
+# Open http://localhost:8080 (Swagger) in your browser.
+# Click "Authorize" and paste the token you’ll get below.
+
+
+# ===============================
+# 2a) Smoke test ALL endpoints
+# ===============================
+
+# Health
+curl -s $BASE_URL/api/health; echo
+
+# Register (idempotent; ignore 409/duplicate username)
+curl -s -X POST $BASE_URL/api/auth/register \
+ -H "Content-Type: application/json" \
+ -d '{"username":"alice2","password":"ravi","name":"Alice Two","faculty":"CSE","phone":"999","role":"STUDENT"}' | jq .
+
+# Login -> TOKEN
+LOGIN=$(curl -s -X POST $BASE_URL/api/auth/login \
+ -H "Content-Type: application/json" \
+ -d '{"username":"alice2","password":"ravi"}'); echo "$LOGIN" | jq .
+TOKEN=$(echo "$LOGIN" | jq -r '.token'); echo "TOKEN=$TOKEN"
+
+# Me
+curl -s $BASE_URL/api/me -H "Authorization: Bearer $TOKEN" | jq .
+
+# Create items
+ITEM1=$(curl -s -X POST $BASE_URL/api/items \
+ -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+ -d '{"type":"LOST","title":"Lost Wallet","description":"Brown wallet","category":"Accessories","locationFound":"CSE Block"}')
+ITEM2=$(curl -s -X POST $BASE_URL/api/items \
+ -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+ -d '{"type":"FOUND","title":"Found USB Drive","description":"16GB black","category":"Electronics","locationFound":"Library"}')
+echo "$ITEM1" | jq .; echo "$ITEM2" | jq .
+ITEM1_ID=$(echo "$ITEM1" | jq -r '.id // .data.id // .item.id'); echo "ITEM1_ID=$ITEM1_ID"
+
+# List + get-by-id
+curl -s $BASE_URL/api/items | jq .
+curl -s $BASE_URL/api/items/$ITEM1_ID | jq .
+
+# Create claim
+CLAIM_JSON=$(curl -s -X POST "$BASE_URL/api/claims" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"itemId\":\"$ITEM1_ID\",\"message\":\"Has my ID card\",\"contact\":\"alice2@uni\"}")
+echo "$CLAIM_JSON" | jq .
+CLAIM_ID=$(echo "$CLAIM_JSON" | jq -r '.id // .claim?.id // .data?.id'); echo "CLAIM_ID=$CLAIM_ID"
+
+# Approve claim (owner/admin)
+APPROVE_JSON=$(curl -s -X PUT "$BASE_URL/api/claims/$CLAIM_ID" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"APPROVED"}')
+echo "$APPROVE_JSON" | jq .
+
+# List claims
+curl -s "$BASE_URL/api/claims" -H "Authorization: Bearer $TOKEN" | jq .
+
+
+# ==================================
+# 3) VIEW DATABASE CHANGES (MySQL)
+# ==================================
+
+# GUI (Prisma Studio)
+cd ~/Desktop/ASSL/college_connect/Campus-Connect/campus-lost-found
+npx prisma studio   # opens http://localhost:5555
+
+# MySQL CLI (optional; fill creds from .env DATABASE_URL)
+# mysql -h HOST -P PORT -u USER -p DBNAME -e "
+#   SHOW TABLES;
+#   SELECT 'User' AS tbl, COUNT(*) rows FROM User
+#   UNION ALL SELECT 'Item', COUNT(*) FROM Item
+#   UNION ALL SELECT 'Claim', COUNT(*) FROM Claim;
+#   SELECT id, type, title, ownerId, createdAt FROM Item ORDER BY createdAt DESC LIMIT 5;
+#   SELECT id, itemId, claimerId, status, createdAt FROM Claim ORDER BY createdAt DESC LIMIT 5;
+# "

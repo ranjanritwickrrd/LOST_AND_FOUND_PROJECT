@@ -1,0 +1,131 @@
+
+> campus-lost-found@0.1.0 coverage
+> cross-env NODE_ENV=test vitest run --coverage --coverage.provider=v8 --coverage.reporter=text --coverage.reporter=lcov --coverage.reporter=html --coverage.threshold.lines=60
+
+
+[1m[46m RUN [49m[22m [36mv4.0.7 [39m[90m/home/ritwick/Desktop/ASSL/college_connect/Campus-Connect/campus-lost-found[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+Prisma schema loaded from prisma/schema.test.prisma
+Prisma schema loaded from prisma/schema.test.prisma
+Prisma schema loaded from prisma/schema.test.prisma
+Prisma schema loaded from prisma/schema.test.prisma
+Prisma schema loaded from prisma/schema.test.prisma
+
+✔ Generated Prisma Client (v6.18.0) to ./node_modules/@prisma/client in 477ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+
+
+✔ Generated Prisma Client (v6.18.0) to ./node_modules/@prisma/client in 477ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+
+✔ Generated Prisma Client (v6.18.0) to ./node_modules/@prisma/client in 511ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+
+
+✔ Generated Prisma Client (v6.18.0) to ./node_modules/@prisma/client in 544ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+
+✔ Generated Prisma Client (v6.18.0) to ./node_modules/@prisma/client in 384ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+
+Prisma schema loaded from prisma/schema.test.prisma
+Datasource "db": SQLite database "test.db" at "file:./prisma/test.db"
+
+The database is already in sync with the Prisma schema.
+
+Prisma schema loaded from prisma/schema.test.prisma
+Datasource "db": SQLite database "test.db" at "file:./prisma/test.db"
+Prisma schema loaded from prisma/schema.test.prisma
+Datasource "db": SQLite database "test.db" at "file:./prisma/test.db"
+[90mstdout[2m | tests/unit/auth.test.ts
+[22m[39m[dotenv@17.2.3] injecting env (2) from .env.test -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+Prisma schema loaded from prisma/schema.test.prisma
+Datasource "db": SQLite database "test.db" at "file:./prisma/test.db"
+
+The database is already in sync with the Prisma schema.
+
+
+The database is already in sync with the Prisma schema.
+
+
+The database is already in sync with the Prisma schema.
+
+[90mstdout[2m | tests/integration/profile.test.ts
+[22m[39m[dotenv@17.2.3] injecting env (2) from .env.test -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+
+[90mstdout[2m | tests/integration/lost-and-found.int.test.ts
+[22m[39m[dotenv@17.2.3] injecting env (2) from .env.test -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+
+[90mstdout[2m | tests/integration/claims.test.ts
+[22m[39m[dotenv@17.2.3] injecting env (2) from .env.test -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+Prisma schema loaded from prisma/schema.test.prisma
+Datasource "db": SQLite database "test.db" at "file:./prisma/test.db"
+
+The database is already in sync with the Prisma schema.
+
+[90mstdout[2m | tests/integration/items.test.ts
+[22m[39m[dotenv@17.2.3] injecting env (2) from .env.test -- tip: ⚙️  override existing env vars with { override: true }
+
+ [32m✓[39m tests/unit/auth.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 894[2mms[22m[39m
+     [33m[2m✓[22m[39m register -> login -> me [33m 886[2mms[22m[39m
+ [32m✓[39m tests/integration/profile.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 916[2mms[22m[39m
+ [32m✓[39m tests/integration/claims.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 987[2mms[22m[39m
+ [32m✓[39m tests/integration/lost-and-found.int.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 1193[2mms[22m[39m
+ [32m✓[39m tests/integration/items.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 1368[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m      Tests [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 15:48:07
+[2m   Duration [22m 19.10s[2m (transform 1.65s, setup 79.49s, collect 4.76s, tests 5.36s, environment 3ms, prepare 327ms)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   70.76 |    50.94 |   85.71 |    80.4 |                   
+ ...api/auth/login |   68.75 |       50 |     100 |   68.75 |                   
+  route.ts         |   68.75 |       50 |     100 |   68.75 | 14,19,24,30-31    
+ app/api/auth/me   |   77.77 |       50 |     100 |     100 |                   
+  route.ts         |   77.77 |       50 |     100 |     100 | 10-17             
+ .../auth/register |   72.72 |    55.55 |     100 |      80 |                   
+  route.ts         |   72.72 |    55.55 |     100 |      80 | 10,34             
+ app/api/claims    |   60.71 |       40 |     100 |   73.91 |                   
+  route.ts         |   60.71 |       40 |     100 |   73.91 | 15-19,29-30,51-52 
+ ...pi/claims/[id] |      80 |       50 |      75 |    92.3 |                   
+  route.ts         |      80 |       50 |      75 |    92.3 | 18                
+ app/api/items     |   60.86 |    54.16 |   66.66 |      70 |                   
+  route.ts         |   60.86 |    54.16 |   66.66 |      70 | 14-15,40,42,60-61 
+ ...api/items/[id] |   53.84 |    44.44 |     100 |   63.63 |                   
+  route.ts         |   53.84 |    44.44 |     100 |   63.63 | 10-12,23          
+ ...ms/[id]/claims |    87.5 |       50 |     100 |     100 |                   
+  route.ts         |    87.5 |       50 |     100 |     100 | 11                
+ ...api/items/mine |   85.71 |       50 |     100 |     100 |                   
+  route.ts         |   85.71 |       50 |     100 |     100 | 10                
+ app/api/me        |      75 |       50 |     100 |      75 |                   
+  route.ts         |      75 |       50 |     100 |      75 | 11,20             
+ app/api/profile   |      75 |       60 |   66.66 |    87.5 |                   
+  route.ts         |      75 |       60 |   66.66 |    87.5 | 18,38             
+ lib               |   84.61 |     62.5 |     100 |    90.9 |                   
+  auth.ts          |   77.77 |       50 |     100 |    87.5 | 12                
+  prisma.ts        |     100 |       75 |     100 |     100 | 11                
+-------------------|---------|----------|---------|---------|-------------------

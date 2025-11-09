@@ -1,0 +1,21 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getUserIdFromHeader } from "@/lib/auth"; // or use getUserId(req)
+
+export async function POST(req: Request) {
+  const userId = getUserIdFromHeader(req.headers.get("authorization"));
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { type, title, description } = await req.json();
+  if (!title || !description) {
+    return NextResponse.json({ error: "title and description are required" }, { status: 400 });
+  }
+
+  const created = await prisma.item.create({
+    data: { type, title, description, ownerId: userId }, // FK must point to user.id
+    select: { id: true, title: true, description: true, type: true },
+  });
+
+  return NextResponse.json(created, { status: 201 });
+}
+

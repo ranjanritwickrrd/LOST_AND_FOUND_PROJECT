@@ -1,0 +1,57 @@
+
+# ========================================
+# 🚀 Campus Lost & Found — Full Test Script
+# ========================================
+
+# 1️⃣ Set base URL (choose depending on your running port)
+BASE_URL=http://localhost:3000
+# BASE_URL=http://localhost:3001
+
+# 2️⃣ Register new user (if not exists)
+curl -s -X POST $BASE_URL/api/auth/register  -H "Content-Type: application/json"  -d '{"username":"alice2","password":"ravi","name":"Alice Two","faculty":"CSE","phone":"999","role":"STUDENT"}' | jq .
+
+# 3️⃣ Login and capture token
+LOGIN=$(curl -s -X POST $BASE_URL/api/auth/login  -H "Content-Type: application/json"  -d '{"username":"alice2","password":"ravi"}')
+echo "$LOGIN" | jq .
+TOKEN=$(echo "$LOGIN" | jq -r '.token'); echo "TOKEN=$TOKEN"
+
+# 4️⃣ Check user info
+curl -s $BASE_URL/api/me -H "Authorization: Bearer $TOKEN" | jq .
+
+# 5️⃣ Create sample items
+ITEM1=$(curl -s -X POST $BASE_URL/api/items  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"  -d '{"type":"LOST","title":"Lost Wallet","description":"Brown wallet","category":"Accessories","locationFound":"CSE Block"}')
+ITEM2=$(curl -s -X POST $BASE_URL/api/items  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"  -d '{"type":"FOUND","title":"Found USB Drive","description":"16GB black","category":"Electronics","locationFound":"Library"}')
+
+echo "$ITEM1" | jq .
+echo "$ITEM2" | jq .
+
+ITEM1_ID=$(echo "$ITEM1" | jq -r '.id // .data.id // .item.id')
+ITEM2_ID=$(echo "$ITEM2" | jq -r '.id // .data.id // .item.id')
+echo "ITEM1_ID=$ITEM1_ID  ITEM2_ID=$ITEM2_ID"
+
+# 6️⃣ List and view items
+curl -s $BASE_URL/api/items | jq .
+curl -s $BASE_URL/api/items/$ITEM1_ID | jq .
+
+# 7️⃣ Create a claim
+CLAIM_JSON=$(curl -s -X POST "$BASE_URL/api/claims"   -H "Authorization: Bearer $TOKEN"   -H "Content-Type: application/json"   -d "{"itemId":"$ITEM1_ID","message":"Has my ID card","contact":"alice2@uni"}")
+echo "$CLAIM_JSON" | jq .
+CLAIM_ID=$(echo "$CLAIM_JSON" | jq -r '.id // .claim?.id // .data?.id')
+echo "CLAIM_ID=$CLAIM_ID"
+
+# 8️⃣ Approve the claim (if role allows)
+APPROVE_JSON=$(curl -s -X PUT "$BASE_URL/api/claims/$CLAIM_ID"   -H "Authorization: Bearer $TOKEN"   -H "Content-Type: application/json"   -d '{"status":"APPROVED"}')
+echo "$APPROVE_JSON" | jq .
+
+# 9️⃣ List claims
+curl -s "$BASE_URL/api/claims" -H "Authorization: Bearer $TOKEN" | jq .
+
+# 🔟 Swagger UI available at http://localhost:8080
+# - Click “Authorize” → paste token from $TOKEN
+# - Try endpoints interactively
+
+# 11️⃣ View database (Prisma Studio)
+npx prisma studio
+
+# OR via MySQL CLI
+# mysql -h HOST -P PORT -u USER -p DBNAME -e "SELECT COUNT(*) FROM User; SELECT COUNT(*) FROM Item; SELECT COUNT(*) FROM Claim;"

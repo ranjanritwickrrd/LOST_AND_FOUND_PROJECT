@@ -1,0 +1,74 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getUserIdFromHeader } from "@/lib/auth"; // or use getUserId(req)
+
+export async function POST(req: Request) {
+  const userId = getUserIdFromHeader(req.headers.get("authorization"));
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { type, title, description } = await req.json();
+  if (!title || !description) {
+    return NextResponse.json({ error: "title and description are required" }, { status: 400 });
+  }
+
+  const created = await prisma.item.create({
+    data: { type, title, description, ownerId: userId }, // FK must point to user.id
+    select: { id: true, title: true, description: true, type: true },
+  });
+
+  return NextResponse.json(created, { status: 201 });
+}
+
+
+// --- appended by setup: GET /api/items (return only caller's items) ---
+import { requireUserId } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+
+export async function GET(req: Request) {
+  try {
+    const userId = requireUserId(req);
+
+    const url = new URL(req.url);
+    const limit = Math.min(parseInt(url.searchParams.get("limit") || "20", 10), 100);
+    const q = url.searchParams.get("q") || undefined;       // optional search
+    const type = url.searchParams.get("type") || undefined; // optional: LOST | FOUND
+
+    const where: any = { ownerId: userId };
+    if (type) where.type = type;
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { category: { contains: q, mode: "insensitive" } },
+        { locationFound: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const items = await prisma.item.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        type: true,
+        category: true,
+        locationFound: true,
+        dateFound: true,
+        imageUrl: true,
+        createdAt: true,
+      },
+    });
+
+    return NextResponse.json(items, { status: 200 });
+  } catch (err: any) {
+    if (String(err?.message || "").includes("Unauthorized")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    console.error("GET /api/items error", err);
+    return NextResponse.json({ error: "failed to fetch items" }, { status: 500 });
+  }
+}
+// --- end appended GET ---

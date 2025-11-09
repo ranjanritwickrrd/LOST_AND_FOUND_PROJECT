@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: Campus Lost & Found API
+  version: "1.0.0"
+  description: |
+    Backend API for Section A — Lost & Found (Auth, Items, Claims, Profile).
+servers:
+  - url: http://localhost:3002
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserRegister:
+      type: object
+      required: [username, password, name]
+      properties:
+        username: { type: string }
+        password: { type: string }
+        name: { type: string }
+        gender: { type: string }
+        registerNumber: { type: string }
+        faculty: { type: string }
+        phone: { type: string }
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+security:
+  - bearerAuth: []
+paths:
+  /api/auth/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegister"
+      responses:
+        "201": { description: Created }
+        "400": { description: Missing fields }
+        "409": { description: Username exists }
+
+  /api/auth/login:
+    post:
+      summary: Login and receive a JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        "401": { description: Invalid credentials }
+
+  /api/items:
+    get:
+      summary: List items
+      responses: { "200": { description: OK } }
+    post:
+      summary: Create item (auth)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, title]
+              properties:
+                type: { type: string, enum: [LOST, FOUND] }
+                title: { type: string }
+                description: { type: string }
+                category: { type: string }
+                locationFound: { type: string }
+                dateFound: { type: string, format: date-time }
+                imageUrl: { type: string, nullable: true }
+      responses:
+        "201": { description: Created }
+        "401": { description: Unauthorized }
+
+  /api/profile:
+    get:
+      summary: Get current profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200": { description: OK }
+        "401": { description: Unauthorized }

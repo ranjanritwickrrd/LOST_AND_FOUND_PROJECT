@@ -1,0 +1,7 @@
+import { defineConfig } from "@prisma/config";
+import path from "node:path";
+
+const isTest = process.env.NODE_ENV === "test";
+export default defineConfig({
+  schema: path.join(process.cwd(), isTest ? "prisma/schema.test.prisma" : "prisma/schema.prisma"),
+});

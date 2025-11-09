@@ -1,0 +1,94 @@
+(base) ritwick@ritwick-HP-Laptop-15-da0xxx:~/Desktop/ASSL/college_connect/Campus-Connect/campus-lost-found/campus-lost-found$ npx jest --clearCache
+npx prisma generate
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS lost_found_test;"
+DATABASE_URL="mysql://root:root@127.0.0.1:3306/lost_found_test" npx prisma db push
+DATABASE_URL="mysql://root:root@127.0.0.1:3306/lost_found_test" npm test
+Cleared /tmp/jest_rs
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Loaded Prisma config from prisma.config.ts.
+
+warn The Prisma config file in prisma.config.ts overrides the deprecated `package.json#prisma` property in package.json.
+  For more information, see: https://pris.ly/prisma-config
+
+Prisma config detected, skipping environment variable loading.
+Prisma schema loaded from prisma/schema.prisma
+rr
+✔ Generated Prisma Client (v6.18.0) to ./node_modules/@prisma/client in 196ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+Enter password: 
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Loaded Prisma config from prisma.config.ts.
+
+warn The Prisma config file in prisma.config.ts overrides the deprecated `package.json#prisma` property in package.json.
+  For more information, see: https://pris.ly/prisma-config
+
+Prisma config detected, skipping environment variable loading.
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": MySQL database "lost_found_test" at "127.0.0.1:3306"
+
+The database is already in sync with the Prisma schema.
+
+✔ Generated Prisma Client (v6.18.0) to ./node_modules/@prisma/client in 216
+ms
+
+
+> campus-lost-found@0.1.0 test
+> jest --coverage --runInBand
+
+ FAIL  tests/claims.test.ts
+  ● Test suite failed to run
+
+    tests/claims.test.ts:54:7 - error TS2353: Object literal may only specify known properties, and 'url' does not exist in type 'CallOptions'.
+
+    54       url: `http://test.local/api/items/${itemId}/claims`,
+             ~~~
+    tests/claims.test.ts:63:7 - error TS2353: Object literal may only specify known properties, and 'url' does not exist in type 'CallOptions'.
+
+    63       url: `http://test.local/api/claims/${claimId}`,
+             ~~~
+
+ FAIL  tests/items.test.ts
+  ● Test suite failed to run
+
+    tests/items.test.ts:38:7 - error TS2353: Object literal may only specify known properties, and 'url' does not exist in type 'CallOptions'.
+
+    38       url: `http://test.local/api/items/${id}`,
+             ~~~
+
+ PASS  tests/auth.test.ts
+ PASS  tests/profile.test.ts
+---------------|---------|----------|---------|---------|-------------------
+File           | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+---------------|---------|----------|---------|---------|-------------------
+All files      |   87.35 |       50 |     100 |   94.93 |                   
+ ...auth/login |   84.21 |       40 |     100 |   94.11 |                   
+  route.ts     |   84.21 |       40 |     100 |   94.11 | 9                 
+ ...uth/logout |     100 |      100 |     100 |     100 |                   
+  route.ts     |     100 |      100 |     100 |     100 |                   
+ ...pi/auth/me |   88.88 |        0 |     100 |     100 |                   
+  route.ts     |   88.88 |        0 |     100 |     100 | 7                 
+ ...h/register |   84.61 |       60 |     100 |   84.61 |                   
+  route.ts     |   84.61 |       60 |     100 |   84.61 | 8,12              
+ ...pi/profile |   83.33 |    33.33 |     100 |     100 |                   
+  route.ts     |   83.33 |    33.33 |     100 |     100 | 7-28              
+ lib           |    91.3 |       75 |     100 |   95.23 |                   
+  auth.ts      |   88.88 |       60 |     100 |   94.11 | 23                
+  prisma.ts    |     100 |      100 |     100 |     100 |                   
+---------------|---------|----------|---------|---------|-------------------
+
+Test Suites: 2 failed, 2 passed, 4 total
+Tests:       2 passed, 2 total
+Snapshots:   0 total
+Time:        11.105 s
+Ran all test suites.
+(base) ritwick@ritwick-HP-Laptop-15-da0xxx:~/Desktop/ASSL/college_connect/Campus-Connect/campus-lost-found/campus-lost-found$ 
+
+

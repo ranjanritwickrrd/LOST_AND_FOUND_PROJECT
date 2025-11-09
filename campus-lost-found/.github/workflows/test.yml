@@ -1,0 +1,63 @@
+name: CI - Lost & Found API
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/lost_found_test
+      JWT_SECRET: dev_super_secret_change_me
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            (echo > /dev/tcp/127.0.0.1/3306) >/dev/null 2>&1 && break
+            sleep 2
+          done
+
+      - name: Create test DB
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y mysql-client
+          mysql -h 127.0.0.1 -P 3306 -uroot -proot -e 'CREATE DATABASE IF NOT EXISTS lost_found_test;'
+
+      - name: Prisma generate & push
+        run: |
+          npx prisma generate
+          npx prisma db push
+
+      - name: Run tests with coverage
+        run: npm test

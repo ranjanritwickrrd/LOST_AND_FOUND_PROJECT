@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ItemType {
+  LOST
+  FOUND
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  name         String?
+  passwordHash String
+  role         String?
+  faculty      String?
+  phone        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  items  Item[]
+  claims Claim[]
+}
+
+model Item {
+  id            String   @id @default(cuid())
+  ownerId       String
+  type          ItemType
+  title         String
+  description   String?
+  category      String?
+  locationFound String?
+  dateFound     DateTime?
+  imageUrl      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  owner  User   @relation(fields: [ownerId], references: [id])
+  claims Claim[]
+}
+
+
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Claim {
+  id        String      @id @default(cuid())
+  itemId    String
+  claimerId String
+  message   String?
+  contact   String?
+  status    ClaimStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  item    Item @relation(fields: [itemId], references: [id])
+  claimer User @relation(fields: [claimerId], references: [id])
+
+  @@unique([itemId, claimerId])
+}

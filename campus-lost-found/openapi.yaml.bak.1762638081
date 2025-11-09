@@ -1,0 +1,281 @@
+openapi: 3.0.3
+info:
+  title: Campus Lost & Found API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+  - url: http://localhost:3000
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+paths:
+  /api/health:
+    get: { summary: Health check, responses: { '200': { description: OK } } }
+  /api/auth/register:
+    post:
+      summary: Register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password, name]
+              properties:
+                username: { type: string }
+                password: { type: string, format: password }
+                name: { type: string }
+                faculty: { type: string }
+                phone: { type: string }
+                role: { type: string, enum: [STUDENT, TEACHER, ADMIN] }
+      responses: { '201': { description: Created } }
+  /api/auth/login:
+    post:
+      summary: Login → JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string, format: password }
+      responses: { '200': { description: OK } }
+  /api/me:
+    get: { summary: Current user, security: [ { bearerAuth: [] } ], responses: { '200': { description: OK } } }
+  /api/items:
+    get: { summary: List items, responses: { '200': { description: OK } } }
+    post:
+      summary: Create item
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, title]
+              properties:
+                type: { type: string, enum: [LOST, FOUND] }
+                title: { type: string }
+                description: { type: string }
+                category: { type: string }
+                locationFound: { type: string }
+                dateFound: { type: string, format: date-time }
+                imageUrl: { type: string }
+      responses: { '201': { description: Created } }
+  /api/items/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    get: { summary: Get item, responses: { '200': { description: OK }, '404': { description: Not Found } } }
+    put:
+      summary: Update item
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type: { type: string, enum: [LOST, FOUND] }
+                title: { type: string }
+                description: { type: string }
+                category: { type: string }
+                locationFound: { type: string }
+                dateFound: { type: string, format: date-time }
+                imageUrl: { type: string }
+      responses: { '200': { description: Updated } }
+    delete: { summary: Delete item, security: [ { bearerAuth: [] } ], responses: { '200': { description: Deleted } } }
+  /api/claims:
+    get: { summary: List claims, security: [ { bearerAuth: [] } ], responses: { '200': { description: OK } } }
+    post:
+      summary: Create claim
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId, message]
+              properties:
+                itemId: { type: string }
+                message: { type: string }
+                contact: { type: string }
+      responses: { '201': { description: Created } }
+  /api/claims/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    put:
+      summary: Update claim status
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [PENDING, APPROVED, REJECTED] }
+      responses: { '200': { description: Updated } }
+paths:
+  /api/items/{id}/claim:
+    post:
+      summary: Create a claim for an item
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string }
+                contact: { type: string }
+      responses:
+        '201':
+          description: Claim created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClaimPublic' }
+        '400': { description: Bad request }
+        '401': { description: Unauthorized }
+        '404': { description: Item not found }
+
+  /api/items/{id}/claims:
+    get:
+      summary: List claims for an item (owner only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Claims list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ClaimWithClaimer' }
+        '401': { description: Unauthorized }
+        '403': { description: Forbidden }
+
+  /api/claims/{id}/approve:
+    post:
+      summary: Approve a claim (item owner)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Approved claim
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClaimPublic' }
+        '401': { description: Unauthorized }
+        '403': { description: Forbidden }
+        '404': { description: Not found }
+
+  /api/claims/{id}/reject:
+    post:
+      summary: Reject a claim (item owner)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Rejected claim
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClaimPublic' }
+        '401': { description: Unauthorized }
+        '403': { description: Forbidden }
+        '404': { description: Not found }
+
+  /api/claims/mine:
+    get:
+      summary: List claims created by me
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: My claims
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ClaimWithItem' }
+        '401': { description: Unauthorized }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ClaimPublic:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [PENDING, APPROVED, REJECTED] }
+        createdAt: { type: string }
+        message: { type: string, nullable: true }
+        contact: { type: string, nullable: true }
+
+    UserLite:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string, nullable: true }
+        faculty: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+
+    ItemLite:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        type: { type: string, enum: [LOST, FOUND] }
+        createdAt: { type: string }
+        owner:
+          $ref: '#/components/schemas/UserLite'
+
+    ClaimWithClaimer:
+      allOf:
+        - $ref: '#/components/schemas/ClaimPublic'
+        - type: object
+          properties:
+            claimer:
+              $ref: '#/components/schemas/UserLite'
+
+    ClaimWithItem:
+      allOf:
+        - $ref: '#/components/schemas/ClaimPublic'
+        - type: object
+          properties:
+            item:
+              $ref: '#/components/schemas/ItemLite'

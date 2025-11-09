@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Campus Lost & Found — Test Console</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#0f1220; --panel:#171a2b; --muted:#9aa3b2; --text:#e5e7f1; --accent:#7c3aed; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Inter,system-ui,Segoe UI,Roboto,Arial}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    .title{display:flex;align-items:center;gap:12px;margin:0 0 12px}
+    .badge{font-size:12px;padding:.25rem .5rem;border-radius:999px;background:#1f2338;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:20px}
+    .card{background:var(--panel);border:1px solid #222746;border-radius:14px;padding:16px}
+    .card h3{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+    .row{display:flex;gap:8px;margin:8px 0}
+    .col{flex:1}
+    input,select,button,textarea{width:100%;border-radius:10px;border:1px solid #242a42;background:#0f1324;color:var(--text)}
+    input,select{padding:10px}
+    button{cursor:pointer;background:#223055;border-color:#2b385e}
+    button.primary{background:#2b3a6b}
+    button.good{background:#155e39;border-color:#1b7a4a}
+    button.warn{background:#5e3f16;border-color:#7a531b}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    .pill{display:inline-block;padding:.4rem .7rem;border-radius:999px;background:#11162a;border:1px solid #242a42;color:var(--muted);font-size:12px}
+    pre{white-space:pre-wrap;word-break:break-word;background:#0b0e1a;border:1px solid #1b2137;border-radius:12px;padding:12px;min-height:280px}
+    small{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2 class="title">Campus Lost &amp; Found <span class="badge" id="state">idle</span></h2>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Quick actions</h3>
+
+        <div class="row"><div class="col"><input id="name" placeholder="Full name (for register)" value="Alice"></div></div>
+        <div class="row">
+          <div class="col"><input id="username" placeholder="username" value="alice"></div>
+          <div class="col"><input id="password" placeholder="password" type="password" value="p12345"></div>
+        </div>
+        <div class="row">
+          <div class="col"><button id="register" class="good">Register</button></div>
+          <div class="col"><button id="login" class="primary">Login</button></div>
+          <div class="col"><button id="logout">Logout</button></div>
+        </div>
+
+        <div class="row"><div class="col"><input id="title" placeholder="Item title (e.g. Wallet)"></div></div>
+        <div class="row">
+          <div class="col">
+            <select id="itype">
+              <option value="LOST">LOST</option>
+              <option value="FOUND">FOUND</option>
+            </select>
+          </div>
+          <div class="col"><input id="location" placeholder="Location (e.g. Library)"></div>
+        </div>
+        <div class="row">
+          <div class="col"><button id="create" class="good">Create item</button></div>
+          <div class="col"><button id="mine" class="primary">My items</button></div>
+        </div>
+
+        <div class="row"><div class="col"><input id="q" placeholder="Search items (optional)"></div></div>
+        <div class="row">
+          <div class="col">
+            <select id="flt">
+              <option value="ALL">All</option>
+              <option value="LOST">LOST</option>
+              <option value="FOUND">FOUND</option>
+            </select>
+          </div>
+          <div class="col"><button id="list" class="primary">List items</button></div>
+          <div class="col"><button id="me">Me</button></div>
+        </div>
+
+        <small>Session is stored in cookie <span class="pill">session</span>. Requests use <code>credentials: "include"</code> so cookies are sent.</small>
+      </div>
+
+      <div class="card">
+        <h3>Pretty output</h3>
+        <pre id="out">Output appears here…</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const setState = (s) => { $('state').textContent = s; };
+
+    async function call(path, opts = {}) {
+      const o = {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',   // <-- IMPORTANT: carry cookies
+        ...opts
+      };
+      const t0 = performance.now();
+      try {
+        const res = await fetch(path, o);
+        let body, text;
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) body = await res.json();
+        else text = await res.text();
+        const ms = Math.round(performance.now() - t0);
+        $('out').textContent = JSON.stringify({ status: res.status, body, text }, null, 2);
+        setState(`${res.status} • ${ms}ms`);
+      } catch (e) {
+        $('out').textContent = JSON.stringify({ error: String(e) }, null, 2);
+        setState('error');
+      }
+    }
+
+    $('register').onclick = () =>
+      call('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: $('name').value.trim(),
+          username: $('username').value.trim(),
+          password: $('password').value
+        })
+      });
+
+    $('login').onclick = () =>
+      call('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          username: $('username').value.trim(),
+          password: $('password').value
+        })
+      });
+
+    $('logout').onclick = () => call('/api/auth/logout', { method: 'POST' });
+    $('me').onclick     = () => call('/api/auth/me');
+
+    $('create').onclick = () =>
+      call('/api/items', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: $('title').value.trim() || 'Untitled',
+          type: $('itype').value,
+          location: $('location').value.trim() || 'Unknown',
+          description: ''
+        })
+      });
+
+    $('mine').onclick = () => call('/api/items/mine');
+
+    $('list').onclick = () => {
+      const t = $('flt').value;
+      const q = $('q').value.trim();
+      const params = new URLSearchParams();
+      if (t !== 'ALL') params.set('type', t);
+      if (q) params.set('search', q);
+      call(`/api/items${params.toString() ? '?' + params.toString() : ''}`);
+    };
+
+    // Hard refresh protection: ensure you’re not looking at a cached HTML
+    // (Next serves /public files with aggressive caching in some setups)
+    if (!window.location.search.includes('nocache')) {
+      // no-op; kept for reference
+    }
+  </script>
+</body>
+</html>
+

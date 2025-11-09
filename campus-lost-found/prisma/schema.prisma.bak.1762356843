@@ -1,0 +1,89 @@
+// =====================
+// Prisma schema (MySQL)
+// =====================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---- Enums ----
+enum ItemType {
+  LOST
+  FOUND
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ---- Models ----
+model User {
+  id             String   @id @default(cuid())
+  username       String   @unique
+  name           String
+  passwordHash   String
+
+  // Optional extras (your register body sometimes includes these)
+  gender         String?    // "male" | "female" | etc. (string for simplicity)
+  registerNumber String?
+  faculty        String?
+  phone          String?
+
+  // Relations
+  items          Item[]
+  claims         Claim[]    @relation("UserClaims", fields: [], references: [])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([username])
+}
+
+model Item {
+  id            String    @id @default(cuid())
+  ownerId       String
+  owner         User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  type          ItemType
+  title         String
+  description   String?
+  category      String?
+  locationFound String?
+  dateFound     DateTime?
+  imageUrl      String?
+
+  claims        Claim[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([type, createdAt])
+}
+
+model Claim {
+  id        String       @id @default(cuid())
+  itemId    String
+  item      Item         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  // optional: who claimed (if you wire it later)
+  claimerId String?
+  claimer   User?        @relation("UserClaims", fields: [claimerId], references: [id])
+
+  message   String?
+  contact   String?
+  status    ClaimStatus  @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([itemId])
+  @@index([claimerId])
+}

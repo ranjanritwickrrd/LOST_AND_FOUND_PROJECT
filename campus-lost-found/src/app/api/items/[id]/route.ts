@@ -15,7 +15,7 @@ export async function GET(
       where: { id },
       select: {
         id: true,
-        ownerId: true,        // <-- expose ownerId
+        ownerId: true,        // expose ownerId
         title: true,
         description: true,
         type: true,
@@ -24,15 +24,21 @@ export async function GET(
         dateFound: true,
         imageUrl: true,
         createdAt: true,
+        isResolved: true,     // Phase 2: show resolved or not
       },
     });
 
-    if (!item) return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    if (!item) {
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    }
 
     const isOwner = authUserId ? authUserId === item.ownerId : false;
     return NextResponse.json({ ...item, isOwner }, { status: 200 });
   } catch (err) {
     console.error("item GET error", err);
-    return NextResponse.json({ error: "failed to get item" }, { status: 500 });
+    return NextResponse.json(
+      { error: "failed to get item" },
+      { status: 500 },
+    );
   }
 }

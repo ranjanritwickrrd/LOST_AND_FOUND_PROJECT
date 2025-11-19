@@ -6,28 +6,49 @@ import { getUserIdFromHeader } from "@/lib/auth";
 export async function GET(req: Request) {
   try {
     const userId = getUserIdFromHeader(req.headers.get("authorization"));
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const me = await prisma.user.findUnique({ where: { id: userId } });
-    if (!me) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!me) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
+    // If ADMIN, see all claims
     if ((me as any).role === "ADMIN") {
       const all = await prisma.claim.findMany({
         orderBy: { createdAt: "desc" },
-        include: { item: true, claimer: { select: { id: true, username: true, name: true } } },
+        include: {
+          item: true,
+          claimer: { select: { id: true, username: true, name: true } },
+        },
       });
       return NextResponse.json(all, { status: 200 });
     }
 
+    // Normal user -> claims I made + claims on my items
     const mine = await prisma.claim.findMany({
-      where: { OR: [{ claimerId: userId }, { item: { ownerId: userId } }] },
+      where: {
+        OR: [
+          { claimerId: userId },
+          { item: { ownerId: userId } },
+        ],
+      },
       orderBy: { createdAt: "desc" },
-      include: { item: true, claimer: { select: { id: true, username: true, name: true } } },
+      include: {
+        item: true,
+        claimer: { select: { id: true, username: true, name: true } },
+      },
     });
+
     return NextResponse.json(mine, { status: 200 });
   } catch (e: any) {
     console.error("GET /api/claims error:", e);
-    return NextResponse.json({ error: e?.message || "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: e?.message || "Server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -35,20 +56,43 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const userId = getUserIdFromHeader(req.headers.get("authorization"));
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { itemId, message, contact } = await req.json();
-    if (!itemId) return NextResponse.json({ error: "itemId required" }, { status: 400 });
+    if (!itemId) {
+      return NextResponse.json({ error: "itemId required" }, { status: 400 });
+    }
 
     const item = await prisma.item.findUnique({ where: { id: itemId } });
-    if (!item) return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    if (!item) {
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    }
+
+    // Phase 2: Do not allow claims on already resolved (matched) items
+    if (item.isResolved) {
+      return NextResponse.json(
+        { error: "This item has already been resolved" },
+        { status: 400 },
+      );
+    }
 
     const claim = await prisma.claim.create({
-      data: { itemId, claimerId: userId, message: message ?? "", contact: contact ?? "" },
+      data: {
+        itemId,
+        claimerId: userId,
+        message: message ?? "",
+        contact: contact ?? "",
+      },
     });
+
     return NextResponse.json(claim, { status: 201 });
   } catch (e: any) {
     console.error("POST /api/claims error:", e);
-    return NextResponse.json({ error: e?.message || "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: e?.message || "Server error" },
+      { status: 500 },
+    );
   }
 }

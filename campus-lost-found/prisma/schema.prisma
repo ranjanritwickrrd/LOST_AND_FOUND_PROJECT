@@ -17,14 +17,16 @@ model User {
   phone        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  items        Item[]
+
+  // A user can have many claims and items
   claims       Claim[]  @relation("ClaimClaimer")
+  items        Item[]
 }
 
 model Item {
   id            String    @id @default(cuid())
   ownerId       String
-  type          String
+  type          String    // "LOST" or "FOUND"
   title         String
   description   String?
   category      String?
@@ -33,9 +35,17 @@ model Item {
   imageUrl      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  isResolved    Boolean   @default(false)
 
-  owner  User    @relation(fields: [ownerId], references: [id])
-  claims Claim[]
+  // Old claim-based system
+  claims        Claim[]
+
+  // New match-based system (Phase 2)
+  lostMatches   Match[]   @relation("LostItemMatches")
+  foundMatches  Match[]   @relation("FoundItemMatches")
+
+  // If a User is deleted, delete their Items too
+  owner         User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@map("Item")
 }
@@ -50,13 +60,37 @@ model Claim {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
-  item    Item @relation(fields: [itemId], references: [id])
-  claimer User @relation("ClaimClaimer", fields: [claimerId], references: [id])
+  // If a User is deleted, delete their Claims
+  claimer   User        @relation("ClaimClaimer", fields: [claimerId], references: [id], onDelete: Cascade)
+
+  // If an Item is deleted, delete its Claims
+  item      Item        @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@map("Claim")
 }
 
+// New Phase 2 model for linking LOST item <-> FOUND item
+model Match {
+  id          String      @id @default(cuid())
+  lostItemId  String
+  foundItemId String
+  status      MatchStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  lostItem    Item        @relation("LostItemMatches",  fields: [lostItemId],  references: [id], onDelete: Cascade)
+  foundItem   Item        @relation("FoundItemMatches", fields: [foundItemId], references: [id], onDelete: Cascade)
+
+  @@unique([lostItemId, foundItemId])
+}
+
 enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MatchStatus {
   PENDING
   APPROVED
   REJECTED

@@ -1,0 +1,43 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(req: NextRequest) {
+  const origin = req.headers.get("origin") || "";
+
+  const res = NextResponse.next();
+
+  // Allow all localhost origins (frontend + docker swagger)
+  if (
+    origin.startsWith("http://localhost") ||
+    origin.startsWith("http://127.0.0.1")
+  ) {
+    res.headers.set("Access-Control-Allow-Origin", origin);
+  } else {
+    res.headers.set("Access-Control-Allow-Origin", "*");
+  }
+
+  res.headers.set("Access-Control-Allow-Credentials", "true");
+  res.headers.set(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.headers.set(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  );
+
+  // Handle CORS preflight for Swagger
+  if (req.method === "OPTIONS") {
+    return new NextResponse(null, {
+      status: 204,
+      headers: res.headers,
+    });
+  }
+
+  return res;
+}
+
+// Apply middleware ONLY to API routes
+export const config = {
+  matcher: ["/api/:path*"],
+};

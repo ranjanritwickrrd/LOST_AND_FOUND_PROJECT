@@ -1,0 +1,205 @@
+tests: on campus-lost-and-found
+: base) ritwick@ritwick-HP-Laptop-15-da0xxx:~/Desktop/ASSL/college_connect/Campus-Connect/campus-lost-found$ 
+
+rm -rf node_modules/.vitest node_modules/.vite 2>/dev/null || true
+npx vitest --clearCache >/dev/null 2>&1 || true
+
+npm run test
+npm run coverage:txt
+
+
+
+> campus-lost-found@0.1.0 pretest
+> cross-env NODE_ENV=test DATABASE_URL=file:./prisma/test.db prisma db push --skip-generate
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "test.db" at "file:./prisma/test.db"
+
+The database is already in sync with the Prisma schema.
+
+
+> campus-lost-found@0.1.0 test
+> vitest run --coverage
+
+
+ RUN  v4.0.8 /home/ritwick/Desktop/ASSL/college_connect/Campus-Connect/campus-lost-found
+      Coverage enabled with v8
+
+ ✓ __tests__/integration/auth.routes.int.test.ts (1 test) 104ms
+ ✓ __tests__/integration/me.routes.int.test.ts (1 test) 109ms
+ ✓ __tests__/integration/claims.routes.int.test.ts (1 test) 116ms
+ ✓ __tests__/integration/items.routes.int.test.ts (1 test) 123ms
+ ✓ __tests__/integration/db.health.int.test.ts (1 test) 123ms
+ ✓ __tests__/integration/items.int.test.ts (1 test) 81ms
+ ✓ __tests__/unit/auth.unit.test.ts (2 tests) 74ms
+ ↓ __tests__/integration/items.claim.int.test.ts (1 test | 1 skipped)
+
+ Test Files  7 passed | 1 skipped (8)
+      Tests  8 passed | 1 skipped (9)
+   Start at  06:00:50
+   Duration  1.80s (transform 1.13s, setup 1.54s, collect 1.63s, tests 730ms, environment 6ms, prepare 690ms)
+
+ % Coverage report from v8
+----------|---------|----------|---------|---------|-------------------
+File      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+----------|---------|----------|---------|---------|-------------------
+All files |   88.88 |       75 |     100 |    87.5 |                   
+ auth.ts  |   88.88 |       75 |     100 |    87.5 | 16                
+----------|---------|----------|---------|---------|-------------------
+
+> campus-lost-found@0.1.0 coverage:txt
+> mkdir -p coverage && vitest run --coverage --reporter=default | tee coverage/coverage.txt
+
+
+ RUN  v4.0.8 /home/ritwick/Desktop/ASSL/college_connect/Campus-Connect/campus-lost-found
+      Coverage enabled with v8
+
+ ✓ __tests__/integration/me.routes.int.test.ts (1 test) 58ms
+ ✓ __tests__/integration/claims.routes.int.test.ts (1 test) 73ms
+ ✓ __tests__/integration/db.health.int.test.ts (1 test) 98ms
+ ✓ __tests__/integration/items.routes.int.test.ts (1 test) 75ms
+ ✓ __tests__/integration/auth.routes.int.test.ts (1 test) 86ms
+ ✓ __tests__/integration/items.int.test.ts (1 test) 53ms
+ ✓ __tests__/unit/auth.unit.test.ts (2 tests) 54ms
+ ↓ __tests__/integration/items.claim.int.test.ts (1 test | 1 skipped)
+
+ Test Files  7 passed | 1 skipped (8)
+      Tests  8 passed | 1 skipped (9)
+   Start at  06:00:53
+   Duration  1.66s (transform 1.17s, setup 1.43s, collect 1.53s, tests 497ms, environment 5ms, prepare 676ms)
+
+ % Coverage report from v8
+----------|---------|----------|---------|---------|-------------------
+File      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+----------|---------|----------|---------|---------|-------------------
+All files |   88.88 |       75 |     100 |    87.5 |                   
+ auth.ts  |   88.88 |       75 |     100 |    87.5 | 16                
+----------|---------|----------|---------|---------|-------------------
+(base) ritwick@ritwick-HP-Laptop-15-da0xxx:~/Desktop/ASSL/college_connect/Campus-Connect/campus-lost-found$ 
+
+
+
+
+
+
+SWAGGER api: (base) ritwick@ritwick-HP-Laptop-15-da0xxx:~/Desktop/SAFE VERSION lost and found/campus-lost-found$ 
+cd ~/Desktop/LOST_AND_FOUND_PROJECT/campus-lost-found
+
+
+# Remove any old container
+docker rm -f campus-lf-swagger 2>/dev/null || true
+
+# Run Swagger UI on :8080
+docker run --name campus-lf-swagger -p 8080:8080 \
+  -e SWAGGER_JSON=/app/openapi.yaml \
+  -v "$PWD/openapi.3002.yaml:/app/openapi.yaml:ro" \
+  swaggerapi/swagger-ui
+  
+  
+  
+  
+  # Make a Swagger copy that targets :3000
+cp -f openapi.yaml openapi.3000.yaml
+# Replace any 3002/3001 with 3000 in the "servers" URL(s)
+sed -i 's#127\.0\.0\.1:3002#127.0.0.1:3000#g' openapi.3000.yaml
+sed -i 's#localhost:3002#localhost:3000#g'   openapi.3000.yaml
+sed -i 's#127\.0\.0\.1:3001#127.0.0.1:3000#g' openapi.3000.yaml
+sed -i 's#localhost:3001#localhost:3000#g'   openapi.3000.yaml
+
+# Restart Swagger UI bound to the 3000 file
+docker rm -f campus-lf-swagger 2>/dev/null || true
+docker run --name campus-lf-swagger -p 8080:8080 \
+  -e SWAGGER_JSON=/app/openapi.yaml \
+  -v "$PWD/openapi.3000.yaml:/app/openapi.yaml:ro" \
+  swaggerapi/swagger-ui
+
+
+
+
+
+
+
+
+
+
+run prisma on : ritwick@ritwick-HP-Laptop-15-da0xxx:~/Desktop/LOST_AND_FOUND_PROJECT/campus-connect-frontend$ 
+: # Go to your Lost & Found backend directory
+cd ~/Desktop/LOST_AND_FOUND_PROJECT/campus-lost-found
+
+# Ensure backend uses the same absolute database file
+ABS_DEV="file:$(realpath prisma/dev.db)"
+echo "Using DATABASE_URL=$ABS_DEV"
+
+# (Optional) Kill any other Prisma Studio instances
+pkill -f "prisma studio" 2>/dev/null || true
+
+# Launch Prisma Studio attached to the correct dev.db
+DATABASE_URL="$ABS_DEV" npx prisma studio --port 5560
+
+
+backend:
+	export DATABASE_URL="file:$(realpath prisma/dev.db)"
+	npm run dev
+
+cd ~/Desktop/LOST_AND_FOUND_PROJECT/campus-lost-found
+
+# Kill + remove old container
+docker rm -f campus-lf-swagger 2>/dev/null || true
+
+# Run Swagger UI on :8080, using updated openapi.3002.yaml (now pointing to 3000)
+docker run --name campus-lf-swagger -p 8080:8080 \
+  -e SWAGGER_JSON=/app/openapi.yaml \
+  -v "$PWD/openapi.3002.yaml:/app/openapi.yaml:ro" \
+  swaggerapi/swagger-ui
+
+
+kill old:1️⃣ Kill the old Next.js dev process + clear the lock 
+
+cd ~/Desktop/LOST_AND_FOUND_PROJECT/campus-lost-found
+
+echo "== Check which node/next processes are running =="
+ps aux | grep "next dev" | grep -v grep || true
+ps aux | grep "node" | grep -v grep || true
+
+echo "== Kill any stray next dev / node servers =="
+pkill -f "next dev" 2>/dev/null || true
+pkill -f "node --watch" 2>/dev/null || true
+pkill -f "node server.js" 2>/dev/null || trueexport DATABASE_URL="file:$(realpath prisma/dev.db)"
+npm run dev
+
+echo "== Check and free ports 3000 and 3001 =="
+sudo lsof -i :3000 -i :3001 || true
+
+# If you still see some process on 3000/3001, kill by PID, e.g.
+# sudo kill -9 <PID>
+
+echo "== Remove stale Next.js dev lock =="
+rm -f .next/dev/lock
+
+echo "== Clean .next cache (optional but safe) =="
+rm -rf .next
+
+cd ~/Desktop/LOST_AND_FOUND_PROJECT/campus-lost-found
+
+ABS_DEV="file:$(realpath ./prisma/dev.db)"
+echo "Using DATABASE_URL=$ABS_DEV"
+
+DATABASE_URL="$ABS_DEV" npx prisma studio --port 5560
+ACTUAL::
+
+
+cd ~/Desktop/LOST_AND_FOUND_PROJECT/campus-lost-found
+
+ABS_DEV="file:$(realpath ./prisma/dev.db)"
+echo "Using DATABASE_URL=$ABS_DEV"
+
+# Push current schema.prisma to the SQLite dev.db
+DATABASE_URL="$ABS_DEV" npx prisma db push
+
+# Regenerate client (safe, but you already did it)
+DATABASE_URL="$ABS_DEV" npx prisma generate
+
+ABS_DEV="file:$(realpath ./prisma/dev.db)"
+DATABASE_URL="$ABS_DEV" npx prisma studio --port 5560
+
